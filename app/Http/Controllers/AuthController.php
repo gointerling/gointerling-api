@@ -1,7 +1,9 @@
 <?php
+// app/Http/Controllers/AuthController.php
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,24 +16,24 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'fullname' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return ApiResponse::send(422, null, null, $validator->errors());
         }
 
         $user = User::create([
-            'name' => $request->name,
+            'fullname' => $request->fullname,
             'email' => $request->email,
             'password' => bcrypt($request->password),
         ]);
 
         $token = JWTAuth::fromUser($user);
 
-        return response()->json(compact('user', 'token'), 201);
+        return ApiResponse::send(201, compact('user', 'token'), 'User registered successfully.');
     }
 
     public function login(Request $request)
@@ -39,10 +41,14 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return ApiResponse::send(401, null, null, 'Invalid email or password.');
         }
 
-        return response()->json(compact('token'));
+        // get only  user data :
+        // email, fullname, photo, address, phone, is_admin, status
+        $user = Auth::user()->only('email', 'fullname', 'photo', 'address', 'phone', 'is_admin', 'status');
+
+        return ApiResponse::send(200, compact('token', 'user'), 'Login successful.');
     }
 
     public function googleRedirect()
@@ -52,10 +58,15 @@ class AuthController extends Controller
 
     public function googleCallback()
     {
-        $user = Socialite::driver('google')->stateless()->user();
+        try {
+            $user = Socialite::driver('google')->stateless()->user();
+        } catch (\Exception $e) {
+            return ApiResponse::send(500, null, null, 'Error during authentication');
+        }
+
         $authUser = User::createOrGetUser($user);
         $token = JWTAuth::fromUser($authUser);
 
-        return response()->json(compact('authUser', 'token'));
+        return ApiResponse::send(200, compact('authUser', 'token'), 'Authentication successful.');
     }
 }

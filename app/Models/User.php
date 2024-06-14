@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -14,9 +15,25 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
 
-    protected $fillable = ['id', 'name', 'email', 'password', 'provider_id'];
+    protected $fillable = [
+        'id', 
+        'fullname', 
+        'email', 
+        'phone', 
+        'password', 
+        'photo', 
+        'address', 
+        'credential_id', 
+        'is_admin', 
+        'status'
+    ];
+
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected $hidden = [
+        'password',
+    ];
 
     public static function boot()
     {
@@ -25,11 +42,6 @@ class User extends Authenticatable implements JWTSubject
         static::creating(function ($model) {
             $model->{$model->getKeyName()} = (string) Str::uuid();
         });
-    }
-
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'role_user');
     }
 
     public function getJWTIdentifier()
@@ -44,16 +56,48 @@ class User extends Authenticatable implements JWTSubject
 
     public static function createOrGetUser(ProviderUser $providerUser)
     {
-        $user = User::where('provider_id', $providerUser->getId())->first();
+        $user = User::where('email', $providerUser->getEmail())->first();
 
         if (!$user) {
             $user = User::create([
-                'name' => $providerUser->getName(),
+                'fullname' => $providerUser->getName(),
                 'email' => $providerUser->getEmail(),
                 'provider_id' => $providerUser->getId(),
+                'password' => '', // Set an appropriate default password or handle it as needed
             ]);
         }
 
         return $user;
+    }
+
+    // Define relationships
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewer_id');
+    }
+
+    public function merchantReviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'merchant_user_id');
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function merchantOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'merchant_user_id');
+    }
+
+    public function merchants(): BelongsToMany
+    {
+        return $this->belongsToMany(Merchant::class, 'rel_merchant_user');
     }
 }
