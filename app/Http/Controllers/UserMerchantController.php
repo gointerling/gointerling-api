@@ -19,11 +19,11 @@ class UserMerchantController extends Controller
     {
         $filter = $request->query('filter', 'all');
 
-        if ($filter === 'merchant') {
-            $users = User::where('is_admin', false)->has('merchants')->get();
-        } else {
-            $users = User::where('is_admin', false)->get();
-        }
+        // Get all users who are merchants (not admins) and have a merchant record and also relationship with merchant
+        $users = User::where('is_admin', false)
+            ->whereHas('merchants')
+            ->with('merchants')
+            ->get();
 
         if ($users->isEmpty()) {
             return ApiResponse::send(404, null, 'No merchants found.');
@@ -63,6 +63,7 @@ class UserMerchantController extends Controller
             'is_admin' => $request->is_admin,
         ]);
 
+
         if (!$request->is_admin) {
             Merchant::create([
                 'user_id' => $user->id,
@@ -71,7 +72,12 @@ class UserMerchantController extends Controller
                 'bank' => $request->bank,
                 'bank_account' => $request->bank_account,
                 'status' => $request->status,
-                // Add other merchant fields as needed
+                'rating' => $request->rating,
+                'recomended_count' => $request->recomended_count,
+                'cv_url' => null,
+                'portfolios' => json_encode([]),
+                'certificates' => json_encode([]),
+                'is_first_time' => true,
             ]);
         }
 
@@ -99,38 +105,33 @@ class UserMerchantController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
-    {
+    public function update(Request $request, User $user) {
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'is_admin' => 'required|boolean',
-            'merchant_type' => 'required_if:is_admin,false|in:translator,interpreter,both',
-            'bank_id' => 'required_if:is_admin,false|string',
-            'bank' => 'required_if:is_admin,false|string',
-            'bank_account' => 'required_if:is_admin,false|string',
-            'status' => 'required_if:is_admin,false|in:active,verified,pending,inactive',
+            'status' => 'required|in:active,verified,pending,inactive',
         ]);
 
         if ($validator->fails()) {
             return ApiResponse::send(422, null, null, $validator->errors());
         }
 
-        $user->fullname = $request->fullname;
-        $user->email = $request->email;
-        $user->is_admin = $request->is_admin;
-        $user->save();
+        $user->update([
+            'fullname' => $request->fullname,
+            'email' => $request->email,
+            'status' => $request->status,
+        ]);
 
         if (!$user->is_admin) {
             $merchant = Merchant::where('user_id', $user->id)->first();
-            if ($merchant) {
-                $merchant->type = $request->merchant_type;
-                $merchant->bank_id = $request->bank_id;
-                $merchant->bank = $request->bank;
-                $merchant->bank_account = $request->bank_account;
-                $merchant->status = $request->status;
-                $merchant->save();
-            }
+            $merchant->update([
+                'type' => $request->merchant_type,
+                'bank_id' => $request->bank_id,
+                'bank' => $request->bank,
+                'bank_account' => $request->bank_account,
+                'status' => $request->status,
+
+            ]);
         }
 
         return ApiResponse::send(200, compact('user'), 'Merchant user updated successfully.');

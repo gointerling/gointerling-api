@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Merchant extends Model
 {
     use HasFactory;
+
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'type',
@@ -19,13 +23,23 @@ class Merchant extends Model
         'certificates',
         'status',
         'rating',
-        'recomended_count'
+        'recomended_count',
+        'is_first_time',
     ];
 
     protected $casts = [
         'portfolios' => 'array',
         'certificates' => 'array',
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->{$model->getKeyName()} = (string) Str::uuid();
+        });
+    }
 
     public function users()
     {

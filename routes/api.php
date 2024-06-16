@@ -3,19 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserMerchantController;
+use App\Http\Controllers\FileUploadController;
 
-// testing route
-Route::get('test', function () {
-    // dummy user data response
-    return response()->json([
-        'message' => 'Hello World!',
-        'data' => [
-            'name' => 'John Doe',
-            'email' => 'johndoe@mail.com',
-            'photo' => 'https://fastly.picsum.photos/id/579/200/300.jpg?hmac=9MD8EV4Jl9EqKLkTj5kyNdBUKQWyHk2m4pE4UCBGc8Q',
-        ],
-    ]);
-});
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -30,10 +19,21 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     
+    // users update with id
+    Route::put('/users/{user}/update-password', [UserController::class, 'updatePassword']);
+    Route::put('/users/{user}/update-role', [UserController::class, 'updateRole']);
+    
     // merchants
     Route::get('/users-merchants', [UserMerchantController::class, 'index']);
     Route::get('/users-merchants/{merchant}', [UserMerchantController::class, 'show']);
     Route::post('/users-merchants', [UserMerchantController::class, 'store']);
     Route::put('/users-merchants/{merchant}', [UserMerchantController::class, 'update']);
     Route::delete('/users-merchants/{merchant}', [UserMerchantController::class, 'destroy']);
+
+    // files
+    Route::get('files', [FileUploadController::class, 'index']);
+    Route::post('files', [FileUploadController::class, 'store']);
+    Route::get('files/{id}', [FileUploadController::class, 'show']);
+    Route::put('files/{id}', [FileUploadController::class, 'update']);
+    Route::delete('files/{id}', [FileUploadController::class, 'destroy']);
 });

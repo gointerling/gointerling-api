@@ -20,6 +20,7 @@ class CreateMerchantsTable extends Migration
             $table->enum('status', ['active', 'verified', 'pending', 'inactive']);
             $table->integer('rating')->default(0);
             $table->integer('recomended_count')->default(0);
+            $table->boolean('is_first_time')->default(true);
             $table->timestamps();
         });
     }

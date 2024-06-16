@@ -1,15 +1,16 @@
 <?php
 // app/Http/Controllers/AuthController.php
-
 namespace App\Http\Controllers;
 
 use App\Helpers\ApiResponse;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Validator;
 
 class AuthController extends Controller
 {
@@ -25,15 +26,42 @@ class AuthController extends Controller
             return ApiResponse::send(422, null, null, $validator->errors());
         }
 
-        $user = User::create([
-            'fullname' => $request->fullname,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
+        DB::beginTransaction();
 
-        $token = JWTAuth::fromUser($user);
+        try {
+            $user = User::create([
+                'fullname' => $request->fullname,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'status' => 'active',
+            ]);
 
-        return ApiResponse::send(201, compact('user', 'token'), 'User registered successfully.');
+            // if user is a facilitator, create a merchant record
+            if ($request->as == 'facilitator') {
+                $user->merchants()->create([
+                    // 'type' => 'translator',
+                    'bank_id' => NULL,
+                    'bank' => NULL,
+                    'bank_account' => NULL,
+                    'cv_url' => NULL,
+                    'portfolios' => NULL,
+                    'certificates' => NULL,
+                    'rating' => 0,
+                    'recomended_count' => 0,
+                    'status' => 'pending',
+                ]);
+            }
+
+            $token = JWTAuth::fromUser($user);
+
+            DB::commit();
+
+            return ApiResponse::send(201, compact('user', 'token'), 'User registered successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return ApiResponse::send(500, null, null, 'Registration failed.');
+        }
     }
 
     public function login(Request $request)

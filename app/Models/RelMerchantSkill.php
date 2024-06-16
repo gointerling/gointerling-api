@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class RelMerchantSkill extends Model
 {
     use HasFactory;
+    public $timestamps = true; // Ensure timestamps are enabled
 
     protected $fillable = [
         'merchant_id',
