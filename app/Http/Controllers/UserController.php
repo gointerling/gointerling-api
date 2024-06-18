@@ -21,6 +21,7 @@ class UserController extends Controller
         $filters = $request->only(['fullname', 'email', 'status', 'isAdmin']);
         $search = $request->input('search');
         $perPage = $request->input('per_page', 15); // Default to 15 items per page
+        $page = $request->input('page', 1);
 
         // Build the query
         $query = User::query();
@@ -42,8 +43,8 @@ class UserController extends Controller
             });
         }
 
-        // Paginate the results
-        $users = $query->paginate($perPage);
+        // Get the users
+        $users = $query->paginate($perPage, ['*'], 'page', $page);
 
         return ApiResponse::send(200, compact('users'), 'Users retrieved successfully.');
     }
@@ -81,8 +82,12 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function show(User $user)
+    public function show(User $user, Request $request)
     {
+        if ($request->has('merchant') && $request->merchant == 'true') {
+            $user->load('merchants');
+        }
+
         return ApiResponse::send(200, compact('user'), 'User retrieved successfully.');
     }
 
@@ -176,5 +181,34 @@ class UserController extends Controller
         $user->save();
 
         return ApiResponse::send(200, compact('user'), 'User updated successfully.');
+    }
+
+    public function showMyUserMerchantDetail(Request $request) {
+        $user = $request->user();
+        $user->load('merchants');
+
+        // if user is not a merchant, return error
+        if ($user->merchants->isEmpty()) {
+            return ApiResponse::send(404, null, 'User is not a merchant.');
+        }
+
+        // reduce the merchant data to the first one
+        $user->merchants = $user->merchants->first();
+
+        // reduce details to only the necessary fields
+        $user->merchants->makeHidden([
+            'pivot'
+        ]);
+
+        // reduce the user data to only the necessary fields
+        $user->makeHidden([
+            'id',
+            'created_at',
+            'updated_at',
+            'credential_id',
+            'is_admin',
+        ]);
+
+        return ApiResponse::send(200, compact('user'), 'User merchant detail retrieved successfully.');
     }
 }

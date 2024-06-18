@@ -130,7 +130,9 @@ class UserMerchantController extends Controller
                 'bank' => $request->bank,
                 'bank_account' => $request->bank_account,
                 'status' => $request->status,
-
+                'cv_url' => $request->cv_url,
+                'portfolios' => json_encode($request->portfolios),
+                'certificates' => json_encode($request->certificates),
             ]);
         }
 
@@ -156,4 +158,66 @@ class UserMerchantController extends Controller
 
         return ApiResponse::send(200, null, 'Merchant user deleted successfully.');
     }
+
+    /**
+     * Display a listing of the merchants user detail.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    
+    public function showMerchantDetail(Request $request, User $user) {
+        $merchant = Merchant::where('user_id', $user->id)->first();
+        if (!$merchant) {
+            return ApiResponse::send(404, null, 'Merchant not found.');
+        }
+
+        return ApiResponse::send(200, compact('merchant'), 'Merchant detail retrieved successfully.');
+    }
+
+    public function updateMyMerchant(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|in:translator,interpreter,both',
+            'bank' => 'required|string',
+            'bank_account' => 'required|string',
+            'cv_url' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        // Get the authenticated user
+        $user = auth()->user();
+
+        // return user json
+        $merchant_id = $user->load('merchants')->merchants[0]->id;
+
+        if (!$user->is_admin) {
+            // rel user with merchant
+            $merchant = Merchant::where('id', $merchant_id)->first();
+
+            $merchant->update([
+                'type' => $request->type,
+                'bank_id' => $request->bank_id,
+                'bank' => $request->bank,
+                'bank_account' => $request->bank_account,
+                'status' => $request->status,
+                'cv_url' => $request->cv_url,
+                'portfolios' => json_encode($request->portfolios),
+                'certificates' => json_encode($request->certificates),
+            ]);
+
+            // If the user has added bank account or cv_url, then it is not the first time anymore
+            if($request->has('bank_account')) {
+                $merchant->is_first_time = false;
+            }
+
+            // save the merchant
+            $merchant->save();
+        }
+
+        return ApiResponse::send(200, compact('user'), 'Merchant user updated successfully.');
+    }
+
+    
 }

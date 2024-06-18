@@ -19,7 +19,8 @@ class FileUploadController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:jpg,png,pdf,docx|max:2048',
+            'file' => 'required|file|mimes:jpg,png,pdf,docx',
+            'file_name' => 'required|string|max:255'
         ]);
 
         if ($validator->fails()) {
@@ -33,7 +34,7 @@ class FileUploadController extends Controller
         $url = env('APP_URL') . '/storage/' . $path;
 
         $fileRecord = File::create([
-            'name' => $file->getClientOriginalName(),
+            'name' => $request->file_name,
             'extension' => $file->getClientOriginalExtension(),
             'url' => $url
         ]);

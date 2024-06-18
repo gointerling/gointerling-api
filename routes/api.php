@@ -13,6 +13,11 @@ Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:api')->group(function () {
+    // my profile
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::get('/my/merchant', [UserController::class, 'showMyUserMerchantDetail']);
+    Route::put('/my/merchant', [UserMerchantController::class, 'updateMyMerchant']);
+    
     // users
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{user}', [UserController::class, 'show']);
@@ -25,10 +30,11 @@ Route::middleware('auth:api')->group(function () {
     
     // merchants
     Route::get('/users-merchants', [UserMerchantController::class, 'index']);
-    Route::get('/users-merchants/{merchant}', [UserMerchantController::class, 'show']);
+    Route::get('/users-merchants/{merchant}', [UserMerchantController::class, 'showMerchantDetail']);
     Route::post('/users-merchants', [UserMerchantController::class, 'store']);
     Route::put('/users-merchants/{merchant}', [UserMerchantController::class, 'update']);
     Route::delete('/users-merchants/{merchant}', [UserMerchantController::class, 'destroy']);
+    
 
     // files
     Route::get('files', [FileUploadController::class, 'index']);

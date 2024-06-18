@@ -76,7 +76,17 @@ class AuthController extends Controller
         // email, fullname, photo, address, phone, is_admin, status
         $user = Auth::user()->only('email', 'fullname', 'photo', 'address', 'phone', 'is_admin', 'status');
 
+        // check if user is a facilitator
+        $user['is_facilitator'] = Auth::user()->merchants->first() ? true : false;
+
         return ApiResponse::send(200, compact('token', 'user'), 'Login successful.');
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+
+        return ApiResponse::send(200, compact('user'), 'User profile retrieved successfully.');
     }
 
     public function googleRedirect()
