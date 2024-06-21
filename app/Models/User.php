@@ -25,7 +25,10 @@ class User extends Authenticatable implements JWTSubject
         'address', 
         'credential_id', 
         'is_admin', 
-        'status'
+        'status',
+        'personal_description',
+        'main_skills',
+        'additional_skills',
     ];
 
     public $incrementing = false;

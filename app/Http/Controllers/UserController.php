@@ -117,6 +117,7 @@ class UserController extends Controller
             'phone',
             'photo',
             'address',
+            'personal_description',
             'credential_id',
             'status'
         ]))->save();
@@ -210,5 +211,39 @@ class UserController extends Controller
         ]);
 
         return ApiResponse::send(200, compact('user'), 'User merchant detail retrieved successfully.');
+    }
+
+    public function showMyUserMerchantServiceDetail(Request $request) {
+        $user = $request->user();
+        $user->load('merchants.services');
+
+        // if user is not a merchant, return error
+        if ($user->merchants->isEmpty()) {
+            return ApiResponse::send(404, null, 'User is not a merchant.');
+        }
+
+        // reduce the merchant data to the first one
+        $user->merchants = $user->merchants->first();
+
+        // if merchant has no services, return error
+        if ($user->merchants->services->isEmpty()) {
+            return ApiResponse::send(404, null, 'Merchant has no services.');
+        }
+        
+        // reduce details to only the necessary fields
+        $user->merchants->makeHidden([
+            'pivot'
+        ]);
+
+        // reduce the user data to only the necessary fields
+        $user->makeHidden([
+            'id',
+            'created_at',
+            'updated_at',
+            'credential_id',
+            'is_admin',
+        ]);
+
+        return ApiResponse::send(200, compact('user'), 'User merchant service detail retrieved successfully.');
     }
 }

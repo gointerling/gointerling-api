@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
-class Language extends Model
+class Advertisement extends Model
 {
     use HasFactory;
 
@@ -13,9 +14,12 @@ class Language extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id',
         'name',
-        'code'
+        'tagline',
+        'description',
+        'package_id',
+        'image_url',
+        'cta_link',
     ];
 
     protected static function boot()
@@ -23,7 +27,12 @@ class Language extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->id = Str::uuid(); // Generate UUID for 'id' when creating
+            $model->id = (string) Str::uuid();
         });
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(Package::class);
     }
 }

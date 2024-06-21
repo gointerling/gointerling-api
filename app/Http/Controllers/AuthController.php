@@ -74,10 +74,13 @@ class AuthController extends Controller
 
         // get only  user data :
         // email, fullname, photo, address, phone, is_admin, status
-        $user = Auth::user()->only('email', 'fullname', 'photo', 'address', 'phone', 'is_admin', 'status');
+        $user = Auth::user()->only('email', 'fullname', 'photo', 'address', 'phone', 'is_admin', 'status', 'personal_description', 'main_skills', 'additional_skills');
 
         // check if user is a facilitator
-        $user['is_facilitator'] = Auth::user()->merchants->first() ? true : false;
+        $merchant = Auth::user()->merchants->first();
+        $user['is_facilitator'] = $merchant ? true : false;
+        $user['merchant_status'] = $merchant->status ?? null;
+        $user['is_first_time'] = $merchant->is_first_time ?? null;
 
         return ApiResponse::send(200, compact('token', 'user'), 'Login successful.');
     }
@@ -87,6 +90,59 @@ class AuthController extends Controller
         $user = Auth::user();
 
         return ApiResponse::send(200, compact('user'), 'User profile retrieved successfully.');
+    }
+
+    public function updateMyProfile(){
+        $user = Auth::user();
+
+        $validator = Validator::make(request()->all(), [
+            'fullname' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'photo' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'address' => 'nullable|string',
+            'personal_description' => 'nullable|string',
+            'main_skills' => 'nullable|array',
+            'additional_skills' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        $user->fill(request()->only([
+            'fullname',
+            'email',
+            'photo',
+            'phone',
+            'address',
+            'personal_description',
+            'main_skills',
+            'additional_skills',
+        ]));
+
+        $user->save();
+
+        return ApiResponse::send(200, compact('user'), 'User profile updated successfully.');
+    }
+
+    public function updateMyPassword()
+    {
+        $user = Auth::user();
+
+        $validator = Validator::make(request()->all(), [
+            'password' => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        $user->password = Hash::make(request()->password);
+        $user->save();
+
+        return ApiResponse::send(200, null, 'Password updated successfully.');
     }
 
     public function googleRedirect()

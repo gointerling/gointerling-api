@@ -18,6 +18,9 @@ class CreateUsersTable extends Migration
             $table->text('credential_id')->nullable();
             $table->boolean('is_admin')->default(false);
             $table->enum('status', ['active', 'verified', 'pending', 'inactive']);
+            $table->text('personal_description')->nullable();
+            $table->json('main_skills')->nullable();
+            $table->json('additional_skills')->nullable();
             $table->timestamps();
         });
     }

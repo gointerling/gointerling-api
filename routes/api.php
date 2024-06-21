@@ -4,6 +4,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserMerchantController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\SkillController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\ServiceController;
 
 
 Route::post('auth/register', [AuthController::class, 'register']);
@@ -15,8 +18,12 @@ Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
 Route::middleware('auth:api')->group(function () {
     // my profile
     Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [AuthController::class, 'updateMyProfile']);
+    Route::put('/profile/password', [AuthController::class, 'updateMyPassword']);
     Route::get('/my/merchant', [UserController::class, 'showMyUserMerchantDetail']);
     Route::put('/my/merchant', [UserMerchantController::class, 'updateMyMerchant']);
+    Route::get('/my/service', [UserController::class, 'showMyUserMerchantServiceDetail']);
+    Route::put('/my/service/{service}', [ServiceController::class, 'updateMyService']);
     
     // users
     Route::get('/users', [UserController::class, 'index']);
@@ -32,14 +39,36 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/users-merchants', [UserMerchantController::class, 'index']);
     Route::get('/users-merchants/{merchant}', [UserMerchantController::class, 'showMerchantDetail']);
     Route::post('/users-merchants', [UserMerchantController::class, 'store']);
-    Route::put('/users-merchants/{merchant}', [UserMerchantController::class, 'update']);
-    Route::delete('/users-merchants/{merchant}', [UserMerchantController::class, 'destroy']);
+    Route::put('/users-merchants/{user}', [UserMerchantController::class, 'update']);
+    Route::delete('/users-merchants/{user}', [UserMerchantController::class, 'destroy']);
+    Route::put('/users-merchants/{user}/status', [UserMerchantController::class, 'updateMerchantStatus']);
     
-
     // files
     Route::get('files', [FileUploadController::class, 'index']);
     Route::post('files', [FileUploadController::class, 'store']);
     Route::get('files/{id}', [FileUploadController::class, 'show']);
     Route::put('files/{id}', [FileUploadController::class, 'update']);
     Route::delete('files/{id}', [FileUploadController::class, 'destroy']);
+
+    // skills
+    Route::get('skills', [SkillController::class, 'index']);
+    Route::post('skills', [SkillController::class, 'store']);
+    Route::get('skills/{skill}', [SkillController::class, 'show']);
+    Route::put('skills/{skill}', [SkillController::class, 'update']);
+    Route::delete('skills/{skill}', [SkillController::class, 'destroy']);
+
+    // languages
+    Route::get('/languages', [LanguageController::class, 'index']);
+    Route::get('/languages/{id}', [LanguageController::class, 'show']);
+    Route::post('/languages', [LanguageController::class, 'store']);
+    Route::put('/languages/{id}', [LanguageController::class, 'update']);
+    Route::delete('/languages/{id}', [LanguageController::class, 'destroy']);
+
+    // services
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::get('/services/{service}', [ServiceController::class, 'show']);
+    Route::put('/services/{service}', [ServiceController::class, 'update']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+    Route::get('/user/merchant-services', [ServiceController::class, 'getUserMerchantServices']);
 });

@@ -4,20 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Skill extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'id'; // Ensure the primary key is 'id'
+
+    protected $keyType = 'string'; // Specify the key type as 'string'
+
+    public $incrementing = false; // Disable auto-incrementing for UUIDs
+
     protected $fillable = [
-        'name',
-        'description',
-        'merchant_type',
-        'skill_type'
+        'id', 'name', 'description', 'merchant_type', 'skill_type',
     ];
 
-    public function merchants()
+    // Override boot method to set UUID on creating new model instance
+    protected static function boot()
     {
-        return $this->belongsToMany(Merchant::class, 'rel_merchant_skill');
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->id = Str::uuid(); // Generate UUID for 'id' when creating
+        });
     }
+
+    // Your other relationships or methods
 }
