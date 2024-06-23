@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Package extends Model
+class AdvertisementPackage extends Model
 {
     use HasFactory;
 
@@ -15,8 +15,13 @@ class Package extends Model
 
     protected $fillable = [
         'name',
-        'benefits',
-        'rule'
+        'duration',
+        'size',
+        'route_json'
+    ];
+
+    protected $casts = [
+        'route_json' => 'array',
     ];
 
     protected static function boot()
@@ -24,18 +29,7 @@ class Package extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->id = Str::uuid(); // Generate UUID for 'id' when creating
+            $model->id = (string) Str::uuid(); // Generate UUID for 'id' when creating
         });
-    }
-
-    protected $casts = [
-        'benefits' => 'array',
-        'rule' => 'array',
-    ];
-
-    public function merchants()
-    {
-        return $this->belongsToMany(Merchant::class, 'rel_merchant_package')
-            ->withPivot('subscribe_at', 'valid_until');
     }
 }

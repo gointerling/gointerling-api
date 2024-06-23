@@ -19,7 +19,7 @@ class CreateOrdersTable extends Migration
             $table->text('user_file_url')->nullable();
             $table->json('comment_json')->nullable();
             $table->text('meet_url')->nullable();
-            $table->enum('order_status', ['pending', 'paid', 'refund', 'complete', 'failed']);
+            $table->enum('order_status', ['pending', 'waitingpaid', 'paid', 'refund', 'completed', 'failed']);
             $table->timestamps();
 
             $table->foreign('service_id')->references('id')->on('services');

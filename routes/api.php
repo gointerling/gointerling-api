@@ -7,6 +7,7 @@ use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\OrderController;
 
 
 Route::post('auth/register', [AuthController::class, 'register']);
@@ -22,8 +23,16 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/profile/password', [AuthController::class, 'updateMyPassword']);
     Route::get('/my/merchant', [UserController::class, 'showMyUserMerchantDetail']);
     Route::put('/my/merchant', [UserMerchantController::class, 'updateMyMerchant']);
+    Route::put('/my/merchant/file', [UserMerchantController::class, 'updateMyMerchantFile']);
+    Route::put('/my/merchant/status', [UserController::class, 'updateMyMerchantStatus']);
+    
     Route::get('/my/service', [UserController::class, 'showMyUserMerchantServiceDetail']);
     Route::put('/my/service/{service}', [ServiceController::class, 'updateMyService']);
+
+    Route::get('/my/orders', [OrderController::class, 'getMyOrder']);
+    Route::get('/my/merchant/orders', [OrderController::class, 'getMyMerchantOrder']);
+    Route::post('/my/orders', [OrderController::class, 'setMyOrder']);
+    Route::put('/my/orders/{order}', [OrderController::class, 'updateMyOrder']);
     
     // users
     Route::get('/users', [UserController::class, 'index']);
@@ -42,6 +51,14 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/users-merchants/{user}', [UserMerchantController::class, 'update']);
     Route::delete('/users-merchants/{user}', [UserMerchantController::class, 'destroy']);
     Route::put('/users-merchants/{user}/status', [UserMerchantController::class, 'updateMerchantStatus']);
+
+    // orders
+    Route::get('/orders', [OrderController::class, 'index']);
+    // Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::put('/orders/{order}', [OrderController::class, 'update']);
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+    Route::put('/orders/{order}/client-status', [OrderController::class, 'updateClientStatus']);
     
     // files
     Route::get('files', [FileUploadController::class, 'index']);

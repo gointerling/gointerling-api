@@ -58,10 +58,6 @@ class UserMerchantController extends Controller
         // Paginate results
         $users = $query->paginate($perPage, ['*'], 'page', $page);
 
-        // if ($users->isEmpty()) {
-        //     return ApiResponse::send(404, null, 'No merchants found.');
-        // }
-
         return ApiResponse::send(200, $users, 'Merchants retrieved successfully.');
     }
 
@@ -212,6 +208,27 @@ class UserMerchantController extends Controller
         return ApiResponse::send(200, compact('merchant'), 'Merchant detail retrieved successfully.');
     }
 
+    
+    public function updateMerchantStatus(Request $request, User $user) {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:active,verified,pending,inactive',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        if (!$user->is_admin) {
+            // rel user with merchant
+            $merchant = $user->merchants->first();
+            $merchant->update([
+                'status' => $request->status,
+            ]);
+        }
+
+        return ApiResponse::send(200, compact('user'), 'Merchant status updated successfully.');
+    }
+
     public function updateMyMerchant(Request $request) {
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:translator,interpreter,both',
@@ -279,8 +296,8 @@ class UserMerchantController extends Controller
 
         return ApiResponse::send(200, compact('user'), 'Merchant user updated successfully.');
     }
-    
-    public function updateMerchantStatus(Request $request, User $user) {
+
+    public function updateMyMerchantStatus(Request $request) {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:active,verified,pending,inactive',
         ]);
@@ -291,6 +308,7 @@ class UserMerchantController extends Controller
 
         if (!$user->is_admin) {
             // rel user with merchant
+            
             $merchant = $user->merchants->first();
             $merchant->update([
                 'status' => $request->status,
@@ -298,6 +316,35 @@ class UserMerchantController extends Controller
         }
 
         return ApiResponse::send(200, compact('user'), 'Merchant status updated successfully.');
+    }
+    
+
+    public function updateMyMerchantFile(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'cv_url' => 'string',
+            'portfolios' => 'array',
+            'certificates' => 'array',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        // Get the authenticated user
+        $user = auth()->user();
+
+        if (!$user->is_admin) {
+            // rel user with merchant
+            $merchant = $user->merchants->first();
+
+            $merchant->update([
+                'cv_url' => $request->cv_url,
+                'portfolios' => json_encode($request->portfolios),
+                'certificates' => json_encode($request->certificates),
+            ]);
+        }
+
+        return ApiResponse::send(200, compact('user'), 'Merchant file updated successfully.');
     }
 
     
