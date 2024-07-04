@@ -8,16 +8,22 @@ use App\Http\Controllers\SkillController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AdvertisementController;
+use App\Http\Controllers\AdvertisementPackageController;
+use App\Http\Controllers\SettingController;
 
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::get('auth/google/redirect', [AuthController::class, 'googleRedirect']);
 Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
+Route::get('advertisements/display', [AdvertisementController::class, 'display']);
+Route::get('advertisement-packages', [AdvertisementPackageController::class, 'index']);
+Route::post('files/ads', [FileUploadController::class, 'store']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:api')->group(function () {
-    // my profile
+    // personalize
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [AuthController::class, 'updateMyProfile']);
     Route::put('/profile/password', [AuthController::class, 'updateMyPassword']);
@@ -33,6 +39,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my/merchant/orders', [OrderController::class, 'getMyMerchantOrder']);
     Route::post('/my/orders', [OrderController::class, 'setMyOrder']);
     Route::put('/my/orders/{order}', [OrderController::class, 'updateMyOrder']);
+    Route::get('/my/advertisements', [AdvertisementController::class, 'getMyAds']);
+    Route::post('/my/advertisements', [AdvertisementController::class, 'storeMyAds']);
+    Route::put('/my/advertisements/{advertisement}/proof-of-payment', [AdvertisementController::class, 'updateMyAdsPayment']);
     
     // users
     Route::get('/users', [UserController::class, 'index']);
@@ -88,4 +97,27 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/services/{service}', [ServiceController::class, 'update']);
     Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
     Route::get('/user/merchant-services', [ServiceController::class, 'getUserMerchantServices']);
+
+    // ads
+    Route::get('/advertisements', [AdvertisementController::class, 'index']);
+    Route::post('/advertisements', [AdvertisementController::class, 'store']);
+    Route::get('/advertisements/{advertisement}', [AdvertisementController::class, 'show']);
+    Route::put('/advertisements/{advertisement}', [AdvertisementController::class, 'update']);
+    Route::delete('/advertisements/{advertisement}', [AdvertisementController::class, 'destroy']);
+    Route::put('/advertisements/{advertisement}/status', [AdvertisementController::class, 'setAdsStatus']);
+
+    // ads packages
+    Route::post('/advertisement-packages', [AdvertisementPackageController::class, 'store']);
+    Route::get('/advertisement-packages/{advertisementPackage}', [AdvertisementPackageController::class, 'show']);
+    Route::put('/advertisement-packages/{advertisementPackage}', [AdvertisementPackageController::class, 'update']);
+    Route::delete('/advertisement-packages/{advertisementPackage}', [AdvertisementPackageController::class, 'destroy']);
+
+ 
+    // settings
+    Route::get('/settings', [SettingController::class, 'getSetting']);
+    Route::get('/settings/bank', [SettingController::class, 'getSettingBank']);
+    Route::put('/settings', [SettingController::class, 'updateSetting']);
+    
 });
+
+   

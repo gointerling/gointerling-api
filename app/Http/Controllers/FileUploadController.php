@@ -19,7 +19,7 @@ class FileUploadController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:jpg,png,pdf,docx',
+            'file' => 'required|file|mimes:jpg,png,pdf,svg',
             'file_name' => 'required|string|max:255'
         ]);
 

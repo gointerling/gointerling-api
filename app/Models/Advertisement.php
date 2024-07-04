@@ -20,6 +20,10 @@ class Advertisement extends Model
         'package_id',
         'image_url',
         'cta_link',
+        'valid_until_date',
+        'payment_file_url',
+        'status',
+        'user_id',
     ];
 
     protected static function boot()
@@ -33,6 +37,6 @@ class Advertisement extends Model
 
     public function package()
     {
-        return $this->belongsTo(Package::class);
+        return $this->belongsTo(AdvertisementPackage::class, 'package_id');
     }
 }

@@ -4,27 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
-class AdvertisementPackage extends Model
+class Setting extends Model
 {
     use HasFactory;
-
     public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name',
-        'duration',
-        'price',
-        'size_x',
-        'size_y',
-        'priority',
-        'route_json'
-    ];
-
-    protected $casts = [
-        'route_json' => 'array',
+        'title',
+        'logo',
+        'bank',
+        'bank_account',
+        'bank_account_name',
     ];
 
     protected static function boot()
@@ -32,7 +24,7 @@ class AdvertisementPackage extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->id = (string) Str::uuid(); // Generate UUID for 'id' when creating
+            $model->id = Str::uuid(); // Generate UUID for 'id' when creating
         });
     }
 }
