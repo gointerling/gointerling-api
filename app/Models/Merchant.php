@@ -56,14 +56,16 @@ class Merchant extends Model
         return $this->belongsToMany(Service::class, 'rel_merchant_service');
     }
 
-    public function packages()
-    {
-        return $this->belongsToMany(Package::class, 'rel_merchant_package')
-            ->withPivot('subscribe_at', 'valid_until');
-    }
-
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
+
+    public function subscriptionPackages()
+    {
+        return $this->belongsToMany(SubscriptionPackage::class, 'rel_merchant_subscription', 'merchant_id', 'package_id')
+                    ->withPivot('subscribe_at', 'valid_until', 'is_trial', 'payment_file_url', 'is_valid')
+                    ->withTimestamps();
+    }
+
 }

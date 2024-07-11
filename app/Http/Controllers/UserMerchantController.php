@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Helpers\ApiResponse;
 use App\Models\User;
 use App\Models\Merchant;
+use App\Models\SubscriptionPackage;
+use Carbon\Carbon;
+
 use Illuminate\Http\Request;
 use Validator;
 
@@ -35,6 +38,9 @@ class UserMerchantController extends Controller
                 if ($status) {
                     $q->where('status', $status);
                 }
+
+                // with subscription packages
+                $q->with('subscriptionPackages');
             }]);
 
         // Apply search filter if provided
@@ -54,7 +60,7 @@ class UserMerchantController extends Controller
             // order by rel merchant status
             $query->orderBy('status', 'desc');
         }
-
+        
         // Paginate results
         $users = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -252,6 +258,20 @@ class UserMerchantController extends Controller
             // rel user with merchant
             $merchant = Merchant::where('id', $merchant_id)->first();
 
+            // basic package id
+            $packageId = SubscriptionPackage::where('duration', 1)->first()->id;
+
+            // if first time set merchant subscription package to standard
+            if($merchant->is_first_time) {
+                $merchant->subscriptionPackages()->attach($packageId, [
+                    'subscribe_at' => Carbon::now(),
+                    'valid_until' => Carbon::now()->addMonths(1), 
+                    'is_trial' => true,
+                    'payment_file_url' => NULL,
+                    'is_valid' => true,
+                ]);
+            }
+
             $merchant_type = $merchant['type'];
 
             $merchant->update([
@@ -272,6 +292,7 @@ class UserMerchantController extends Controller
                     'status' => 'pending',
                 ]);
             }
+
 
             // If the user has added bank account or cv_url, then it is not the first time anymore
             if($request->has('bank_account')) {

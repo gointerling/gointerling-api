@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         // Get query parameters for filtering and pagination
-        $filters = $request->only(['fullname', 'email', 'status', 'isAdmin']);
+        $filters = $request->only(['fullname', 'email', 'status', 'is_admin']);
         $search = $request->input('search');
         $perPage = $request->input('per_page', 15); // Default to 15 items per page
         $page = $request->input('page', 1);
@@ -42,6 +42,9 @@ class UserController extends Controller
                   ->orWhere('address', 'LIKE', "%{$search}%");
             });
         }
+
+        // order by fullname
+        $query->orderBy('fullname', 'asc');
 
         // Get the users
         $users = $query->paginate($perPage, ['*'], 'page', $page);
@@ -193,8 +196,13 @@ class UserController extends Controller
             return ApiResponse::send(404, null, 'User is not a merchant.');
         }
 
+        // load the subscription packages
+        $user->merchants->load('subscriptionPackages');
+
         // reduce the merchant data to the first one
         $user->merchants = $user->merchants->first();
+
+        
 
         // reduce details to only the necessary fields
         $user->merchants->makeHidden([
