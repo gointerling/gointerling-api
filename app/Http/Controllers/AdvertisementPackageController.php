@@ -31,14 +31,15 @@ class AdvertisementPackageController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'duration' => 'required|integer|min:1',
-            'size_x' => 'required|integer|min:1',
-            'size_y' => 'required|integer|min:1',
+            'size_x' => 'integer|min:1',
+            'size_y' => 'integer|min:1',
             'priority' => 'required|in:1,2,3',
             'route_json' => 'required|array',
         ]);
 
         if ($validator->fails()) {
-            return ApiResponse::send(422, null, 'Validation Error', $validator->errors());
+
+            return ApiResponse::send(422, null, null, $validator->errors());
         }
 
         $package = AdvertisementPackage::create($request->all());
@@ -76,7 +77,7 @@ class AdvertisementPackageController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return ApiResponse::send(422, null, 'Validation Error', $validator->errors());
+            return ApiResponse::send(422, null, null, $validator->errors());
         }
 
         $advertisementPackage->update($request->all());

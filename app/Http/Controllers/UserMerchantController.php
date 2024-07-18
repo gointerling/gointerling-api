@@ -34,14 +34,16 @@ class UserMerchantController extends Controller
                     $q->where('status', $status);
                 }
             })
-            ->with(['merchants' => function ($q) use ($status) {
-                if ($status) {
-                    $q->where('status', $status);
-                }
+            ->with([
+                'merchants' => function ($q) use ($status) {
+                    if ($status) {
+                        $q->where('status', $status);
+                    }
 
-                // with subscription packages
-                $q->with('subscriptionPackages');
-            }]);
+                    // with subscription packages
+                    $q->with('subscriptionPackages');
+                }
+            ]);
 
         // Apply search filter if provided
         if (!empty($search)) {
@@ -60,7 +62,7 @@ class UserMerchantController extends Controller
             // order by rel merchant status
             $query->orderBy('status', 'desc');
         }
-        
+
         // Paginate results
         $users = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -141,7 +143,8 @@ class UserMerchantController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user) {
+    public function update(Request $request, User $user)
+    {
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -200,8 +203,9 @@ class UserMerchantController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    
-    public function showMerchantDetail(Request $request, $merchant_id) {
+
+    public function showMerchantDetail(Request $request, $merchant_id)
+    {
         $merchant = Merchant::where('id', $merchant_id)->first();
         if (!$merchant) {
             return ApiResponse::send(404, null, 'Merchant not found.');
@@ -214,8 +218,9 @@ class UserMerchantController extends Controller
         return ApiResponse::send(200, compact('merchant'), 'Merchant detail retrieved successfully.');
     }
 
-    
-    public function updateMerchantStatus(Request $request, User $user) {
+
+    public function updateMerchantStatus(Request $request, User $user)
+    {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:active,verified,pending,inactive',
         ]);
@@ -235,13 +240,14 @@ class UserMerchantController extends Controller
         return ApiResponse::send(200, compact('user'), 'Merchant status updated successfully.');
     }
 
-    public function updateMyMerchant(Request $request) {
+    public function updateMyMerchant(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:translator,interpreter,both',
             'bank' => 'required|string',
             'bank_account' => 'required|string',
             'cv_url' => 'nullable|string',
-            'merchant_id'=> 'nullable|string',
+            'merchant_id' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -262,10 +268,10 @@ class UserMerchantController extends Controller
             $packageId = SubscriptionPackage::where('duration', 1)->first()->id;
 
             // if first time set merchant subscription package to standard
-            if($merchant->is_first_time) {
+            if ($merchant->is_first_time) {
                 $merchant->subscriptionPackages()->attach($packageId, [
                     'subscribe_at' => Carbon::now(),
-                    'valid_until' => Carbon::now()->addMonths(1), 
+                    'valid_until' => Carbon::now()->addMonths(1),
                     'is_trial' => true,
                     'payment_file_url' => NULL,
                     'is_valid' => true,
@@ -283,10 +289,10 @@ class UserMerchantController extends Controller
                 'cv_url' => $request->cv_url,
                 'portfolios' => json_encode($request->portfolios),
                 'certificates' => json_encode($request->certificates),
-                'status' => $merchant->status,  
+                'status' => $merchant->status,
             ]);
 
-            if($merchant_type != $request->type) {
+            if ($merchant_type != $request->type) {
                 // set the merchant status to pending
                 $merchant->update([
                     'status' => 'pending',
@@ -295,11 +301,11 @@ class UserMerchantController extends Controller
 
 
             // If the user has added bank account or cv_url, then it is not the first time anymore
-            if($request->has('bank_account')) {
+            if ($request->has('bank_account')) {
                 $merchant->is_first_time = false;
             }
 
-            if($request->has('merchant_id')) {
+            if ($request->has('merchant_id')) {
                 $merchant->services()->create([
                     'name' => 'Standard',
                     'price' => '50000',
@@ -318,7 +324,8 @@ class UserMerchantController extends Controller
         return ApiResponse::send(200, compact('user'), 'Merchant user updated successfully.');
     }
 
-    public function updateMyMerchantStatus(Request $request) {
+    public function updateMyMerchantStatus(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:active,verified,pending,inactive',
         ]);
@@ -327,9 +334,12 @@ class UserMerchantController extends Controller
             return ApiResponse::send(422, null, null, $validator->errors());
         }
 
+        // Get the authenticated user
+        $user = auth()->user();
+
         if (!$user->is_admin) {
             // rel user with merchant
-            
+
             $merchant = $user->merchants->first();
             $merchant->update([
                 'status' => $request->status,
@@ -338,9 +348,10 @@ class UserMerchantController extends Controller
 
         return ApiResponse::send(200, compact('user'), 'Merchant status updated successfully.');
     }
-    
 
-    public function updateMyMerchantFile(Request $request) {
+
+    public function updateMyMerchantFile(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'cv_url' => 'string',
             'portfolios' => 'array',
@@ -368,5 +379,5 @@ class UserMerchantController extends Controller
         return ApiResponse::send(200, compact('user'), 'Merchant file updated successfully.');
     }
 
-    
+
 }

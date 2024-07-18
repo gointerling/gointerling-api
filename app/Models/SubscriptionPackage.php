@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Str;
 
 class SubscriptionPackage extends Model
 {
@@ -16,6 +17,7 @@ class SubscriptionPackage extends Model
     protected $fillable = [
         'name',
         'desc',
+        'price',
         'duration',
         'is_reviewed',
         'is_advertised',
@@ -40,7 +42,7 @@ class SubscriptionPackage extends Model
     public function merchants()
     {
         return $this->belongsToMany(Merchant::class, 'rel_merchant_subscription', 'package_id', 'merchant_id')
-                ->withPivot('subscribe_at', 'valid_until', 'is_trial', 'payment_file_url', 'is_valid')
-                ->withTimestamps();
+            ->withPivot('subscribe_at', 'valid_until', 'is_trial', 'payment_file_url', 'is_valid')
+            ->withTimestamps();
     }
 }

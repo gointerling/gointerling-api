@@ -16,8 +16,10 @@ use App\Http\Controllers\SettingController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
-Route::get('auth/google/redirect', [AuthController::class, 'googleRedirect']);
-Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
+Route::post('auth/sso/google/verify', [AuthController::class, 'googleVerify']);
+// Route::get('auth/google', [AuthController::class, 'googleRedirect']);
+// Route::get('auth/google/callback', [AuthController::class, 'googleCallback']);
+
 Route::get('advertisements/display', [AdvertisementController::class, 'display']);
 Route::get('advertisement-packages', [AdvertisementPackageController::class, 'index']);
 Route::post('files/ads', [FileUploadController::class, 'store']);
@@ -26,47 +28,47 @@ Route::post('files/ads', [FileUploadController::class, 'store']);
 Route::middleware('auth:api')->group(function () {
 
     // Personalize user
-        // profile
-        Route::get('/profile', [AuthController::class, 'profile']);
-        Route::put('/profile', [AuthController::class, 'updateMyProfile']);
-        Route::put('/profile/password', [AuthController::class, 'updateMyPassword']);
-        
-        // merchants
-        Route::get('/my/merchant', [UserController::class, 'showMyUserMerchantDetail']);
-        Route::put('/my/merchant', [UserMerchantController::class, 'updateMyMerchant']);
-        Route::put('/my/merchant/file', [UserMerchantController::class, 'updateMyMerchantFile']);
-        Route::put('/my/merchant/status', [UserController::class, 'updateMyMerchantStatus']);
-        
-        // services
-        Route::get('/my/service', [UserController::class, 'showMyUserMerchantServiceDetail']);
-        Route::put('/my/service/{service}', [ServiceController::class, 'updateMyService']);
+    // profile
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [AuthController::class, 'updateMyProfile']);
+    Route::put('/profile/password', [AuthController::class, 'updateMyPassword']);
 
-        // orders
-        Route::get('/my/orders', [OrderController::class, 'getMyOrder']);
-        Route::get('/my/merchant/orders', [OrderController::class, 'getMyMerchantOrder']);
-        Route::post('/my/orders', [OrderController::class, 'setMyOrder']);
-        Route::put('/my/orders/{order}', [OrderController::class, 'updateMyOrder']);
+    // merchants
+    Route::get('/my/merchant', [UserController::class, 'showMyUserMerchantDetail']);
+    Route::put('/my/merchant', [UserMerchantController::class, 'updateMyMerchant']);
+    Route::put('/my/merchant/file', [UserMerchantController::class, 'updateMyMerchantFile']);
+    Route::put('/my/merchant/status', [UserController::class, 'updateMyMerchantStatus']);
 
-        // ads
-        Route::get('/my/advertisements', [AdvertisementController::class, 'getMyAds']);
-        Route::post('/my/advertisements', [AdvertisementController::class, 'storeMyAds']);
-        Route::put('/my/advertisements/{advertisement}/proof-of-payment', [AdvertisementController::class, 'updateMyAdsPayment']);
+    // services
+    Route::get('/my/service', [UserController::class, 'showMyUserMerchantServiceDetail']);
+    Route::put('/my/service/{service}', [ServiceController::class, 'updateMyService']);
 
-        // subscriptions
-        Route::get('/my/subscriptions', [SubscriptionPackageController::class, 'getMySubscription']);
-        Route::post('/my/subscriptions', [SubscriptionPackageController::class, 'storeMySubscription']);
-        Route::put('/my/subscriptions/{subscription}/proof-of-payment', [SubscriptionPackageController::class, 'updateMySubscriptionPayment']);
-    
+    // orders
+    Route::get('/my/orders', [OrderController::class, 'getMyOrder']);
+    Route::get('/my/merchant/orders', [OrderController::class, 'getMyMerchantOrder']);
+    Route::post('/my/orders', [OrderController::class, 'setMyOrder']);
+    Route::put('/my/orders/{order}', [OrderController::class, 'updateMyOrder']);
+
+    // ads
+    Route::get('/my/advertisements', [AdvertisementController::class, 'getMyAds']);
+    Route::post('/my/advertisements', [AdvertisementController::class, 'storeMyAds']);
+    Route::put('/my/advertisements/{advertisement}/proof-of-payment', [AdvertisementController::class, 'updateMyAdsPayment']);
+
+    // subscriptions
+    Route::get('/my/subscriptions', [SubscriptionPackageController::class, 'getMySubscription']);
+    Route::post('/my/subscriptions', [SubscriptionPackageController::class, 'storeMySubscription']);
+    Route::put('/my/subscriptions/{subscription}/proof-of-payment', [SubscriptionPackageController::class, 'updateMySubscriptionPayment']);
+
     // users
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{user}', [UserController::class, 'show']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
-    
+
     // users update with id
     Route::put('/users/{user}/update-password', [UserController::class, 'updatePassword']);
     Route::put('/users/{user}/update-role', [UserController::class, 'updateRole']);
-    
+
     // merchants
     Route::get('/users-merchants', [UserMerchantController::class, 'index']);
     Route::get('/users-merchants/{merchant}', [UserMerchantController::class, 'showMerchantDetail']);
@@ -82,7 +84,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/orders/{order}', [OrderController::class, 'update']);
     Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
     Route::put('/orders/{order}/client-status', [OrderController::class, 'updateClientStatus']);
-    
+
     // files
     Route::get('files', [FileUploadController::class, 'index']);
     Route::post('files', [FileUploadController::class, 'store']);
@@ -126,7 +128,6 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/advertisement-packages/{advertisementPackage}', [AdvertisementPackageController::class, 'update']);
     Route::delete('/advertisement-packages/{advertisementPackage}', [AdvertisementPackageController::class, 'destroy']);
 
- 
     // settings
     Route::get('/settings', [SettingController::class, 'getSetting']);
     Route::get('/settings/bank', [SettingController::class, 'getSettingBank']);
@@ -134,14 +135,10 @@ Route::middleware('auth:api')->group(function () {
 
     // subscriptions package
     Route::get('/subscriptions-packages', [SubscriptionPackageController::class, 'index']);
-    Route::post('/subscriptions', [SubscriptionPackageController::class, 'store']);
-    Route::get('/subscriptions/{subscription}', [SubscriptionPackageController::class, 'show']);
-    Route::put('/subscriptions/{subscription}', [SubscriptionPackageController::class, 'update']);
-    Route::delete('/subscriptions/{subscription}', [SubscriptionPackageController::class, 'destroy']);
-    Route::put('/subscriptions/{subscription}/status', [SubscriptionPackageController::class, 'updateStatus']);
-    Route::put('/subscriptions/{subscription}/proof-of-payment', [SubscriptionPackageController::class, 'updatePayment']);
-
-    
+    Route::post('/subscriptions-packages', [SubscriptionPackageController::class, 'store']);
+    Route::get('/subscriptions-packages/{subscriptionPackage}', [SubscriptionPackageController::class, 'show']);
+    Route::put('/subscriptions-packages/{subscriptionPackage}', [SubscriptionPackageController::class, 'update']);
+    Route::delete('/subscriptions-packages/{subscriptionPackage}', [SubscriptionPackageController::class, 'destroy']);
+    Route::put('/subscriptions-packages/{subscriptionPackage}/status', [SubscriptionPackageController::class, 'updateStatus']);
+    Route::put('/subscriptions-packages/{subscriptionPackage}/proof-of-payment', [SubscriptionPackageController::class, 'updatePayment']);
 });
-
-   

@@ -92,7 +92,8 @@ class AuthController extends Controller
         return ApiResponse::send(200, compact('user'), 'User profile retrieved successfully.');
     }
 
-    public function updateMyProfile(){
+    public function updateMyProfile()
+    {
         $user = Auth::user();
 
         $validator = Validator::make(request()->all(), [
@@ -147,20 +148,72 @@ class AuthController extends Controller
 
     public function googleRedirect()
     {
-        return Socialite::driver('google')->redirect();
+        $url = Socialite::driver('google')->stateless()->redirect()->getTargetUrl();
+        return ApiResponse::send(200, ['url' => $url], 'Redirect URL generated successfully.');
     }
 
     public function googleCallback()
     {
         try {
-            $user = Socialite::driver('google')->stateless()->user();
+            $providerUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
             return ApiResponse::send(500, null, null, 'Error during authentication');
         }
 
-        $authUser = User::createOrGetUser($user);
-        $token = JWTAuth::fromUser($authUser);
+        $user = User::createOrGetUser($providerUser);
+        $token = JWTAuth::fromUser($user);
 
-        return ApiResponse::send(200, compact('authUser', 'token'), 'Authentication successful.');
+        return ApiResponse::send(200, compact('user', 'token'), 'Authentication successful.');
+    }
+
+    public function googleVerify(Request $request)
+    {
+        $validator = Validator::make(request()->all(), [
+            'token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::send(422, null, null, $validator->errors());
+        }
+
+        try {
+            $providerUser = Socialite::driver('google')->stateless()->userFromToken(request()->token);
+        } catch (\Exception $e) {
+            return ApiResponse::send(500, null, null, 'Error during authentication');
+        }
+
+        $isFacilitator = $request->as == 'facilitator' ? true : false;
+
+        // same the response as default auth
+        $user = User::createOrGetUser($providerUser, $isFacilitator);
+        $token = JWTAuth::fromUser($user);
+
+        // get only  user data :
+        // email, fullname, photo, address, phone, is_admin, status
+
+        // // check if user is a facilitator
+        $merchant = $user->merchants->first();
+        $user['is_facilitator'] = $merchant ? true : false;
+        $user['merchant_status'] = $merchant->status ?? null;
+        $user['is_first_time'] = $merchant->is_first_time ?? null;
+
+
+        $user = $user->only(
+            'email',
+            'fullname',
+            'photo',
+            'address',
+            'phone',
+            'is_admin',
+            'status',
+            'personal_description',
+            'main_skills',
+            'additional_skills',
+            'is_facilitator',
+            'merchant_status',
+            'is_first_time'
+        );
+
+        return ApiResponse::send(200, compact('token', 'user'), 'Login successful.');
     }
 }

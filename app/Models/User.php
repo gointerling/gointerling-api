@@ -16,15 +16,15 @@ class User extends Authenticatable implements JWTSubject
     use Notifiable;
 
     protected $fillable = [
-        'id', 
-        'fullname', 
-        'email', 
-        'phone', 
-        'password', 
-        'photo', 
-        'address', 
-        'credential_id', 
-        'is_admin', 
+        'id',
+        'fullname',
+        'email',
+        'phone',
+        'password',
+        'photo',
+        'address',
+        'credential_id',
+        'is_admin',
         'status',
         'personal_description',
         'main_skills',
@@ -57,7 +57,7 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public static function createOrGetUser(ProviderUser $providerUser)
+    public static function createOrGetUser(ProviderUser $providerUser, $isCreateMerchant = false)
     {
         $user = User::where('email', $providerUser->getEmail())->first();
 
@@ -65,12 +65,29 @@ class User extends Authenticatable implements JWTSubject
             $user = User::create([
                 'fullname' => $providerUser->getName(),
                 'email' => $providerUser->getEmail(),
-                'provider_id' => $providerUser->getId(),
-                'password' => '', // Set an appropriate default password or handle it as needed
+                'password' => bcrypt('gointerlingX123'),
+                // get hd profile picture
+                'photo' => $providerUser->getAvatar(),
             ]);
+
+            if ($isCreateMerchant) {
+                $user->merchants()->create([
+                    // 'type' => 'translator',
+                    'bank_id' => NULL,
+                    'bank' => NULL,
+                    'bank_account' => NULL,
+                    'cv_url' => NULL,
+                    'portfolios' => NULL,
+                    'certificates' => NULL,
+                    'rating' => 0,
+                    'recomended_count' => 0,
+                    'status' => 'pending',
+                ]);
+            }
         }
 
-        return $user;
+        // return with all relation
+        return $user->load('merchants');
     }
 
     // Define relationships
