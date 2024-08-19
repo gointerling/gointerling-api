@@ -9,6 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ApiResponse;
 
+// import notification controller
+use App\Http\Controllers\NotificationController;
+
+use Illuminate\Support\Facades\DB;
+use Exception; // To handle exceptions
+
 class OrderController extends Controller
 {
     /**
@@ -25,7 +31,7 @@ class OrderController extends Controller
         $orderStatus = $request->query('order_status', '');
 
         $query = Order::with(['service', 'merchant', 'user', 'merchantUser', 'reviews'])
-                    ->orderBy('created_at', 'desc'); // Sort by latest orders
+            ->orderBy('created_at', 'desc'); // Sort by latest orders
 
         if (!$user->is_admin) {
             // If the user is not an admin, they can only see their own orders
@@ -33,14 +39,14 @@ class OrderController extends Controller
         }
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%$search%")
-                ->orWhereHas('user', function($q) use ($search) {
-                    $q->where('fullname', 'like', "%$search%");
-                })
-                ->orWhereHas('merchantUser', function($q) use ($search) {
-                    $q->where('fullname', 'like', "%$search%");
-                });
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('fullname', 'like', "%$search%");
+                    })
+                    ->orWhereHas('merchantUser', function ($q) use ($search) {
+                        $q->where('fullname', 'like', "%$search%");
+                    });
             });
         }
 
@@ -94,7 +100,7 @@ class OrderController extends Controller
             'user_file_url' => $request->user_file_url,
             'comment_json' => $request->comment_json,
             'meet_url' => $request->meet_url,
-            'order_status' =>'waitingpaid',
+            'order_status' => 'waitingpaid',
             'language_source' => $request->language_source,
             'language_destination' => $request->language_destination,
         ]);
@@ -163,6 +169,19 @@ class OrderController extends Controller
         // Check if result_file_url is provided in the request
         if ($request->has('result_file_url') && !empty($request->input('result_file_url'))) {
             $request->merge(['order_status' => 'completed']);
+
+            // Trigger a notification (for example, you can use an event or Notification)
+            $buyer = $order->user;
+            $facilitator = $order->merchantUser;
+
+            // Send store notification
+            $notification = new NotificationController();
+            $notification->storeNotification(
+                "Your order has been completed. You can download the result file.",
+                '/my/client/orders/' . $order->id,
+                $buyer->id
+            );
+
         }
 
         $order->update($request->all());
@@ -195,15 +214,15 @@ class OrderController extends Controller
         $orderStatus = $request->query('order_status', '');
 
         $query = Order::where('user_id', Auth::id())
-                    ->with(['service', 'merchant', 'user', 'merchantUser', 'reviews'])
-                    ->orderBy('created_at', 'desc'); // Sort by latest orders
+            ->with(['service', 'merchant', 'user', 'merchantUser', 'reviews'])
+            ->orderBy('created_at', 'desc'); // Sort by latest orders
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%$search%")
-                ->orWhereHas('merchantUser', function($q) use ($search) {
-                    $q->where('fullname', 'like', "%$search%");
-                });
+                    ->orWhereHas('merchantUser', function ($q) use ($search) {
+                        $q->where('fullname', 'like', "%$search%");
+                    });
             });
         }
 
@@ -224,15 +243,15 @@ class OrderController extends Controller
         $orderStatus = $request->query('order_status', '');
 
         $query = Order::where('merchant_user_id', Auth::id())
-                    ->with(['service', 'merchant', 'user', 'merchantUser', 'reviews'])
-                    ->orderBy('created_at', 'desc'); // Sort by latest orders
+            ->with(['service', 'merchant', 'user', 'merchantUser', 'reviews'])
+            ->orderBy('created_at', 'desc'); // Sort by latest orders
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%$search%")
-                ->orWhereHas('user', function($q) use ($search) {
-                    $q->where('fullname', 'like', "%$search%");
-                });
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('fullname', 'like', "%$search%");
+                    });
             });
         }
 
@@ -276,13 +295,50 @@ class OrderController extends Controller
             'order_status' => 'required|string|in:pending,waitingpaid,paid,completed,failed,refund'
         ]);
 
-        $order->update($request->all());
+        try {
+            // Start the DB transaction
+            \DB::beginTransaction();
 
-        return ApiResponse::send(
-            200,
-            compact('order'),
-            'Order status updated successfully.'
-        );
+            // Update the order status
+            $order->update($request->all());
+
+            // Trigger a notification (for example, you can use an event or Notification)
+            $buyer = $order->user;
+            $facilitator = $order->merchantUser;
+            $orderStatus = $request->order_status;
+
+            // Send store notification
+            $notification = new NotificationController();
+            $notification->storeNotification(
+                "Your order status has been updated to $orderStatus.",
+                '/my/client/orders/' . $order->id,
+                $buyer->id
+            );
+
+            $notification->storeNotification(
+                "Your order status has been updated to $orderStatus.",
+                '/my/merchant/orders?detail_id=' . $order->id,
+                $facilitator->id
+            );
+
+            // Commit the transaction
+            \DB::commit();
+
+            return ApiResponse::send(
+                200,
+                compact('order'),
+                'Order status updated successfully, and notification sent.'
+            );
+
+        } catch (\Exception $e) {
+            // Rollback the transaction in case of any error
+            \DB::rollBack();
+
+            return ApiResponse::send(
+                500,
+                null,
+                'Failed to update order status. Error: ' . $e->getMessage()
+            );
+        }
     }
-
 }

@@ -11,6 +11,14 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
 
+
+// import notification controller
+use App\Http\Controllers\NotificationController;
+
+use Illuminate\Support\Facades\DB;
+use Exception; // To handle exceptions
+
+
 class UserMerchantController extends Controller
 {
     /**
@@ -236,6 +244,10 @@ class UserMerchantController extends Controller
                 'status' => $request->status,
             ]);
         }
+
+        // Send notification to the merchant
+        $notification = new NotificationController();
+        $notification->sendNotification($user->id, 'Merchant status updated', 'Your merchant status has been updated to ' . $request->status);
 
         return ApiResponse::send(200, compact('user'), 'Merchant status updated successfully.');
     }

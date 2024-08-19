@@ -12,6 +12,7 @@ use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\AdvertisementPackageController;
 use App\Http\Controllers\SubscriptionPackageController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::post('auth/register', [AuthController::class, 'register']);
@@ -58,6 +59,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my/subscriptions', [SubscriptionPackageController::class, 'getMySubscription']);
     Route::post('/my/subscriptions', [SubscriptionPackageController::class, 'storeMySubscription']);
     Route::put('/my/subscriptions/{subscription}/proof-of-payment', [SubscriptionPackageController::class, 'updateMySubscriptionPayment']);
+
+    // notifications
+    Route::get('/my/notifications', [NotificationController::class, 'getUserNotifications']);     // Get all notifications for a user
+    Route::patch('/my/notifications/mark-all-as-read', [NotificationController::class, 'markAll']);  // Mark all notification as read
+    Route::patch('/my/notifications/{notificationId}/mark-as-read', [NotificationController::class, 'markAsRead']);  // Mark a notification as read
+    Route::delete('/my/notifications/{notificationId}', [NotificationController::class, 'deleteNotification']);  // Delete a notification
 
     // users
     Route::get('/users', [UserController::class, 'index']);
